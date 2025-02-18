@@ -1,3 +1,6 @@
+import './firebase.config' // The config JS doesn't run
+// without this import, but has done
+// in other projects.
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ChakraProvider } from '@chakra-ui/react'
 import List from './pages/List'

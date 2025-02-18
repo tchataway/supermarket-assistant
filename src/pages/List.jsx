@@ -1,5 +1,7 @@
+import { Box } from '@chakra-ui/react'
+
 const List = () => {
-  return <div>List</div>
+  return <Box>List</Box>
 }
 
 export default List
