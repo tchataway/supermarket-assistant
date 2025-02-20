@@ -1,56 +1,32 @@
-import { useEffect, useState } from 'react'
 import Progress from './Progress'
-import { doc, getDoc } from 'firebase/firestore'
-import { db } from '../firebase.config'
-import { Box, HStack, Skeleton } from '@chakra-ui/react'
+import { Box, HStack } from '@chakra-ui/react'
+import { LockIcon } from '@chakra-ui/icons'
 
-const Request = ({ request, shopName }) => {
-  const [loading, setLoading] = useState(false)
-  const [product, setProduct] = useState({
-    name: '',
-    aisles: {},
-  })
+const Request = ({ request, shopName, onChange }) => {
+  const { amount, name, aisles, remaining } = request
+  const aisle = aisles[shopName]
 
-  const { amount, productRef } = request
-
-  useEffect(() => {
-    // Hydrate product data.
-    const getProduct = async () => {
-      try {
-        setLoading(true)
-
-        const snapshot = await getDoc(doc(db, 'products', productRef))
-
-        setProduct(snapshot.data())
-
-        setLoading(false)
-      } catch (error) {
-        setLoading(false)
-        console.log(error)
-      }
-    }
-
-    getProduct()
-  }, [request])
-
-  if (loading) {
-    return <Skeleton height='50px' />
+  const handleProgressChange = (newCount) => {
+    onChange(newCount)
   }
-
-  if (!product) {
-    return <Box>Bad product data.</Box>
-  }
-
-  const aisle = product.aisles[shopName]
 
   return (
     <HStack justifyContent='space-between' spacing={4}>
-      <Progress maxCount={amount} />
+      <Progress
+        maxCount={amount}
+        remaining={remaining}
+        onChange={handleProgressChange}
+      />
       <Box width='100%' justifyContent='start'>
-        {product.name}
+        {name}
       </Box>
-      <Box fontWeight='semibold' width='50px' textAlign='center'>
-        {aisle}
+      <Box
+        fontWeight='semibold'
+        fontSize={'lg'}
+        width='50px'
+        textAlign='center'
+      >
+        {aisle ? aisle : <LockIcon color='red.500' height='60%' width='60%' />}
       </Box>
     </HStack>
   )
