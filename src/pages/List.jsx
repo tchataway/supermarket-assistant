@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import { getAuth } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from 'firebase/firestore'
 import { Box, Button, IconButton, Select, useToast } from '@chakra-ui/react'
 import { db } from '../firebase.config'
 import Spinner from '../components/Spinner'
@@ -10,15 +17,17 @@ import fetchProduct from '../functions/fetchProduct'
 import sortByColesAisle from '../functions/sortByColesAisle'
 import sortByFoodlandAisle from '../functions/sortByFoodlandAisle'
 import sortByWoolworthsAisle from '../functions/sortByWoolworthsAisle'
+import NewRequest from '../components/NewRequest'
 
 const List = () => {
   const [user, setUser] = useState(null)
-  const [selectedShopName, setSelectedShopName] = useState('')
+  const [selectedShopName, setSelectedShopName] = useState('Foodland')
   const [shopName, setShopName] = useState('foodland')
   const [list, setList] = useState([])
   const [sortedList, setSortedList] = useState([])
   const [loading, setLoading] = useState(false)
   const [sortDescending, setSortDescending] = useState(true)
+  const [autocompleteOptions, setAutocompleteOptions] = useState([])
   const toast = useToast()
 
   const auth = getAuth()
@@ -83,13 +92,23 @@ const List = () => {
       }
     }
 
+    // Get product names for auto-complete.
+    const getProductNames = async () => {
+      const allProducts = await getDocs(collection(db, 'products'))
+
+      const productNames = allProducts.docs.map((productDoc) => {
+        return productDoc.data().name
+      })
+
+      setAutocompleteOptions(productNames)
+    }
+
     getUser()
+    getProductNames()
   }, [authUser, toast])
 
   // Sort list whenever it or selected shop name changes.
   useEffect(() => {
-    console.log('Sort begun...')
-
     let listCopy = [...list]
 
     switch (shopName) {
@@ -131,6 +150,63 @@ const List = () => {
     setSortDescending((prevState) => !prevState)
   }
 
+  const validateNewRequest = (newRequest) => {
+    const existingRequest = sortedList.filter(
+      (listItem) => listItem.name.toLowerCase() === newRequest.toLowerCase()
+    )
+
+    if (existingRequest.length > 0) {
+      // Prevent duplicate request entries.
+      toast({
+        status: 'error',
+        description: `${existingRequest[0].name} already on list`,
+      })
+      return false
+    }
+
+    return true
+  }
+
+  const handleNewRequestAdded = async (amount, itemName) => {
+    console.log(`New request for ${amount} ${itemName}`)
+
+    // Attempt to retrieve product information.
+    const newRequest = {
+      amount,
+      remaining: amount,
+      name: itemName,
+      aisles: {},
+    }
+
+    try {
+      setLoading(true)
+
+      const q = query(collection(db, 'products'), where('name', '==', itemName))
+      const existingProduct = await getDocs(q)
+
+      if (!existingProduct.empty) {
+        // Populate aisles data.
+        const aislesData = existingProduct.docs[0].data().aisles
+        newRequest.aisles = aislesData
+      }
+
+      setLoading(false)
+    } catch (error) {
+      setLoading(false)
+      toast({ status: error, description: 'Network error occurred' })
+      return
+    }
+
+    // Add new request to list.
+    setList((prevState) => [...prevState, newRequest])
+  }
+
+  const removeRequest = (itemName) => {
+    let updatedList = list.filter((listItem) => listItem.name !== itemName)
+
+    setList(updatedList)
+  }
+
   if (loading) {
     return <Spinner />
   }
@@ -149,23 +225,31 @@ const List = () => {
       )}
       {user && (
         <>
-          <Box mt='4rem' mx='2rem' height='auto'>
+          <Box mt='4rem' mx='2rem' height='auto' zIndex={0}>
             <Select
               value={selectedShopName}
               onChange={handleShopNameChange}
               placeholder='Select shop'
+              mb='2rem'
             >
               <option>Foodland</option>
               <option>Coles</option>
               <option>Woolworths</option>
             </Select>
           </Box>
+          <div className='above'>
+            <NewRequest
+              onSubmit={handleNewRequestAdded}
+              autocompleteOptions={autocompleteOptions}
+              validate={validateNewRequest}
+            />
+          </div>
           <IconButton
             icon={sortDescending ? <ArrowDownIcon /> : <ArrowUpIcon />}
             onClick={handleSortClick}
             width='30px'
-            mt='2rem'
             alignSelf='end'
+            className='below'
           />
           <Box height='100%'>
             {sortedList.map((request, index) => (
@@ -181,6 +265,7 @@ const List = () => {
 
                     setList(updatedList)
                   }}
+                  onDelete={removeRequest}
                   mb='6px'
                 />
               </div>

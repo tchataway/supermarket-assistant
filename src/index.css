@@ -16,6 +16,20 @@ code {
     monospace;
 }
 
+.autocomplete {
+  position: relative;
+}
+
+.above {
+  position: relative;
+  z-index: 20;
+}
+
+.below {
+  position: relative;
+  z-index: 10;
+}
+
 .loadingSpinnerContainer {
   position: fixed;
   top: 0;
@@ -36,6 +50,28 @@ code {
   border-color: #017474 transparent transparent transparent;
   border-radius: 50%;
   animation: spin 1.2s linear infinite;
+}
+
+.suggestions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #d4d4d4;
+  background-color: #f7f7f7;
+  border-radius: 0 0 10px 10px;
+  position: absolute;
+  left: 0;
+  width: 100%;
+}
+
+.suggestions li {
+  list-style: none;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.suggestions li:hover {
+  background-color: #d4d4d4;
 }
 
 @keyframes spin {
