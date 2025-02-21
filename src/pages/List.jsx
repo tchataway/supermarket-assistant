@@ -182,9 +182,24 @@ const List = () => {
     return true
   }
 
-  const handleNewRequestAdded = async (amount, itemName) => {
-    console.log(`New request for ${amount} ${itemName}`)
+  const findAndUpdateRequest = (updatedRequest) => {
+    let updatedList = [...list]
 
+    const index = updatedList.findIndex(
+      (request) => request.name === updatedRequest.name
+    )
+
+    if (index === -1) {
+      // Couldn't find it, probably deleted before task was finished.
+      return
+    }
+
+    updatedRequest.aisleDataFetched = true
+    updatedList[index] = { ...updatedList[index], ...updatedRequest }
+    setList(updatedList)
+  }
+
+  const handleNewRequestAdded = async (amount, itemName, inputRef) => {
     // Attempt to retrieve product information.
     const newRequest = {
       amount,
@@ -193,27 +208,9 @@ const List = () => {
       aisles: {},
     }
 
-    try {
-      setLoading(true)
-
-      const q = query(collection(db, 'products'), where('name', '==', itemName))
-      const existingProduct = await getDocs(q)
-
-      if (!existingProduct.empty) {
-        // Populate aisles data.
-        const aislesData = existingProduct.docs[0].data().aisles
-        newRequest.aisles = aislesData
-      }
-
-      setLoading(false)
-    } catch (error) {
-      setLoading(false)
-      toast({ status: error, description: 'Network error occurred' })
-      return
-    }
-
     // Add new request to list.
     setList((prevState) => [...prevState, newRequest])
+    inputRef.current.focus()
   }
 
   const openModal = (request) => {
@@ -321,6 +318,9 @@ const List = () => {
                   onContextMenu={() => {
                     openModal(request)
                   }}
+                  onDataReceived={(updatedRequest) =>
+                    findAndUpdateRequest(updatedRequest)
+                  }
                   mb='6px'
                 />
               </div>

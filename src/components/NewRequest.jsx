@@ -36,7 +36,7 @@ const NewRequest = ({ onSubmit, autocompleteOptions, validate }) => {
       return
     }
 
-    onSubmit(amount, itemName)
+    onSubmit(amount, itemName, itemNameInputRef)
 
     // Restore defaults.
     setAmount(1)
