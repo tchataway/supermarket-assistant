@@ -288,10 +288,14 @@ const List = () => {
               productRef = existingProduct.docs[0].id
             } else {
               // New item. Add to database.
-              productRef = await addDoc(collection(db, 'products'), {
-                name: listItem.name,
-                aisles: listItem.aisles,
-              })
+              const newProductDocRef = await addDoc(
+                collection(db, 'products'),
+                {
+                  name: listItem.name,
+                  aisles: listItem.aisles,
+                }
+              )
+              productRef = newProductDocRef.id
             }
 
             if (listItem.remaining > 0) {
