@@ -8,7 +8,16 @@ import {
   query,
   where,
 } from 'firebase/firestore'
-import { Box, Button, IconButton, Select, useToast } from '@chakra-ui/react'
+import {
+  Box,
+  Button,
+  IconButton,
+  Modal,
+  ModalOverlay,
+  Select,
+  useDisclosure,
+  useToast,
+} from '@chakra-ui/react'
 import { db } from '../firebase.config'
 import Spinner from '../components/Spinner'
 import Request from '../components/Request'
@@ -18,6 +27,7 @@ import sortByColesAisle from '../functions/sortByColesAisle'
 import sortByFoodlandAisle from '../functions/sortByFoodlandAisle'
 import sortByWoolworthsAisle from '../functions/sortByWoolworthsAisle'
 import NewRequest from '../components/NewRequest'
+import EditRequestModal from '../components/EditRequestModal'
 
 const List = () => {
   const [user, setUser] = useState(null)
@@ -28,6 +38,11 @@ const List = () => {
   const [loading, setLoading] = useState(false)
   const [sortDescending, setSortDescending] = useState(true)
   const [autocompleteOptions, setAutocompleteOptions] = useState([])
+
+  // Edit Request Modal:
+  const { isOpen, onOpen, onClose } = useDisclosure()
+  const [requestToEdit, setRequestToEdit] = useState({})
+
   const toast = useToast()
 
   const auth = getAuth()
@@ -201,9 +216,47 @@ const List = () => {
     setList((prevState) => [...prevState, newRequest])
   }
 
+  const openModal = (request) => {
+    setRequestToEdit(request)
+    onOpen()
+  }
+
   const removeRequest = (itemName) => {
     let updatedList = list.filter((listItem) => listItem.name !== itemName)
 
+    setList(updatedList)
+  }
+
+  const handleModalConfirm = (modalData) => {
+    if (modalData.removeRequest) {
+      // Handle delete.
+      removeRequest(modalData.request.name)
+      return
+    }
+
+    // Find edited request in list and update it.
+    let updatedList = [...list]
+    const editIndex = updatedList.findIndex(
+      (request) => request.name === modalData.request.name
+    )
+
+    // Calculate new "remaining" number by adding the difference
+    // between requested amounts to it. For example, if a request
+    // has "2" requested, then by default it will also have "2"
+    // remaining. If we increase the amount requested to "3",
+    // the difference is +1, so the remaining would go from "2" to "3".
+    const oldRequest = updatedList[editIndex]
+    const updatedRequest = modalData.request
+    const deltaAmountRequested = updatedRequest.amount - oldRequest.amount
+
+    // If the new amount is less than the old one, our new remaining
+    // could be negative, so clamp it to 0.
+    updatedRequest.remaining = Math.max(
+      oldRequest.remaining + deltaAmountRequested,
+      0
+    )
+
+    updatedList[editIndex] = { ...oldRequest, ...updatedRequest }
     setList(updatedList)
   }
 
@@ -265,7 +318,9 @@ const List = () => {
 
                     setList(updatedList)
                   }}
-                  onDelete={removeRequest}
+                  onContextMenu={() => {
+                    openModal(request)
+                  }}
                   mb='6px'
                 />
               </div>
@@ -273,8 +328,19 @@ const List = () => {
           </Box>
         </>
       )}
+
+      {/* Edit Request Modal */}
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <EditRequestModal
+          onConfirm={handleModalConfirm}
+          onClose={onClose}
+          request={requestToEdit}
+        />
+      </Modal>
+
       <Button colorScheme='blue' my='2rem' mx='3rem' height='100px'>
-        Finish Shopping
+        Update List
       </Button>
     </Box>
   )

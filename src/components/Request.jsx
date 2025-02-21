@@ -2,7 +2,7 @@ import Progress from './Progress'
 import { Box, HStack } from '@chakra-ui/react'
 import { LockIcon } from '@chakra-ui/icons'
 
-const Request = ({ request, shopName, onChange, onDelete }) => {
+const Request = ({ request, shopName, onChange, onContextMenu }) => {
   const { amount, name, aisles, remaining } = request
   const aisle = aisles[shopName]
 
@@ -16,10 +16,7 @@ const Request = ({ request, shopName, onChange, onDelete }) => {
       spacing={4}
       onContextMenu={(e) => {
         e.preventDefault()
-
-        // TODO: Proper context menu. For now,
-        // remove item without confirmation.
-        onDelete(name)
+        onContextMenu()
       }}
     >
       <Progress
