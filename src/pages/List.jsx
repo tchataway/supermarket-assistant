@@ -379,7 +379,7 @@ const List = () => {
             alignSelf='end'
             className='below'
           />
-          <Box height='100%'>
+          <Box height='100%' overflowY='auto' className='hideScrollbar'>
             {sortedList.map((request, index) => (
               <div key={index}>
                 <Request
