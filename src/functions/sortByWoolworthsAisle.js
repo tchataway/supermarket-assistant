@@ -4,8 +4,12 @@ const sortByWoolworthsAisle = (product, otherProduct) => {
   let aisle = product.aisles.woolworths
   let otherAisle = otherProduct.aisles.woolworths
 
-  if (typeof aisle === 'undefined' && typeof otherAisle === 'undefined') {
-    // If neither product has an aisle, sort by
+  if (
+    (typeof aisle === 'undefined' && typeof otherAisle === 'undefined') ||
+    aisle === otherAisle
+  ) {
+    // If neither product has an aisle, or
+    // the aisles are the same, sort by
     // product name instead.
     if (product.name < otherProduct.name) {
       return -1
