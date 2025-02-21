@@ -1,4 +1,4 @@
-import { Box, Button } from '@chakra-ui/react'
+import { Box, Button, useToast } from '@chakra-ui/react'
 import {
   getAuth,
   GoogleAuthProvider,
@@ -10,13 +10,20 @@ import { useNavigate } from 'react-router-dom'
 
 const SignIn = () => {
   const navigate = useNavigate()
+  const toast = useToast()
   const auth = getAuth()
   const user = auth.currentUser
   const provider = new GoogleAuthProvider()
 
   const handleClick = async () => {
     try {
-      await signInWithRedirect(auth, provider)
+      await signInWithPopup(auth, provider)
+        .then((result) => {
+          toast({ status: 'success', description: 'Sign in successful' })
+        })
+        .catch((error) => {
+          toast({ status: 'error', description: error.message })
+        })
       navigate('/')
     } catch (error) {
       console.log('Unable to sign in')
@@ -37,7 +44,7 @@ const SignIn = () => {
       <Box mt='4rem'>{`Currently signed in as ${user.displayName}`}</Box>
       <Button
         onClick={() => {
-          signOut()
+          signOut(auth)
         }}
       >
         Sign Out
