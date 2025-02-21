@@ -59,6 +59,12 @@ const Request = ({
       spacing={4}
       onContextMenu={(e) => {
         e.preventDefault()
+
+        if (loading) {
+          // Prevent edits until loading is finished.
+          return
+        }
+
         onContextMenu()
       }}
     >

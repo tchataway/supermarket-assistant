@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { getAuth } from 'firebase/auth'
 import {
+  addDoc,
   collection,
   doc,
   getDoc,
   getDocs,
   query,
+  updateDoc,
   where,
 } from 'firebase/firestore'
 import {
@@ -48,78 +50,82 @@ const List = () => {
   const auth = getAuth()
   const authUser = auth.currentUser
 
-  useEffect(() => {
-    // Retrieve user from DB.
-    const getUser = async () => {
-      if (!authUser) {
-        // We should have redirected to the sign in page, but
-        // haven't for some reason. Bail out.
+  // Retrieve user from DB.
+  const getUser = async () => {
+    if (!authUser) {
+      // We should have redirected to the sign in page, but
+      // haven't for some reason. Bail out.
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const snapshot = await getDoc(doc(db, 'users', authUser.uid))
+
+      if (!snapshot.exists()) {
+        // User not found in DB.
+        setLoading(false)
         return
       }
 
-      setLoading(true)
+      const userData = snapshot.data()
 
-      try {
-        const snapshot = await getDoc(doc(db, 'users', authUser.uid))
-
-        if (!snapshot.exists()) {
-          // User not found in DB.
-          setLoading(false)
-          return
-        }
-
-        const userData = snapshot.data()
-
-        if (!userData.approved) {
-          console.log('User found but not approved yet.')
-          setLoading(false)
-          return
-        }
-
-        // Hydrate product data for each request.
-        const requestList = await Promise.all(
-          userData.list.map(async (item) => {
-            const { amount, productRef } = item
-
-            const product = await fetchProduct(productRef, setLoading)
-
-            return {
-              amount,
-              name: product.name,
-              aisles: product.aisles,
-              remaining: amount,
-            }
-          })
-        )
-
-        // If we got this far we have the data for an approved user.
+      if (!userData.approved) {
+        console.log('User found but not approved yet.')
         setLoading(false)
-        setUser(userData)
-        setList(requestList)
-      } catch (error) {
-        toast({
-          status: 'error',
-          description: 'Unable to fetch user data from database.',
-          duration: '3000',
-        })
-        console.log(error)
-        setLoading(false)
+        return
       }
-    }
 
-    // Get product names for auto-complete.
-    const getProductNames = async () => {
-      const allProducts = await getDocs(collection(db, 'products'))
+      // Hydrate product data for each request.
+      const requestList = await Promise.all(
+        userData.list.map(async (item) => {
+          const { amount, productRef } = item
 
-      const productNames = allProducts.docs.map((productDoc) => {
-        return productDoc.data().name
+          const product = await fetchProduct(productRef, setLoading)
+
+          return {
+            amount,
+            name: product.name,
+            aisles: product.aisles,
+            remaining: amount,
+          }
+        })
+      )
+
+      // If we got this far we have the data for an approved user.
+      setLoading(false)
+      setUser(userData)
+      setList(requestList)
+    } catch (error) {
+      toast({
+        status: 'error',
+        description: 'Unable to fetch user data from database.',
+        duration: '3000',
       })
-
-      setAutocompleteOptions(productNames)
+      console.log(error)
+      setLoading(false)
     }
+  }
 
-    getUser()
+  // Get product names for auto-complete.
+  const getProductNames = async () => {
+    const allProducts = await getDocs(collection(db, 'products'))
+
+    const productNames = allProducts.docs.map((productDoc) => {
+      return productDoc.data().name
+    })
+
+    setAutocompleteOptions(productNames)
+  }
+
+  const initialisePage = async () => {
+    await getUser()
     getProductNames()
+  }
+
+  useEffect(() => {
+    initialisePage()
   }, [authUser, toast])
 
   // Sort list whenever it or selected shop name changes.
@@ -257,6 +263,74 @@ const List = () => {
     setList(updatedList)
   }
 
+  const handleUpdateList = () => {
+    const submitListUpdates = async () => {
+      const remainingItems = []
+      setLoading(true)
+
+      try {
+        await Promise.all(
+          list.map(async (listItem) => {
+            // Update product data in DB.
+            let productRef = ''
+            const q = query(
+              collection(db, 'products'),
+              where('name', '==', listItem.name)
+            )
+            const existingProduct = await getDocs(q)
+
+            if (!existingProduct.empty) {
+              // Update existing document.
+              await updateDoc(doc(db, 'products', existingProduct.docs[0].id), {
+                ...existingProduct.docs[0].data(),
+                aisles: listItem.aisles,
+              })
+              productRef = existingProduct.docs[0].id
+            } else {
+              // New item. Add to database.
+              productRef = await addDoc(collection(db, 'products'), {
+                name: listItem.name,
+                aisles: listItem.aisles,
+              })
+            }
+
+            if (listItem.remaining > 0) {
+              // If this item is still requested, add it to
+              // list of items to send to DB.
+              remainingItems.push({
+                amount: listItem.remaining,
+                productRef,
+              })
+            }
+          })
+        )
+
+        // Update user list.
+        const userRef = auth.currentUser.uid
+        const userDocRef = doc(db, 'users', userRef)
+        const userDoc = await getDoc(userDocRef)
+        const userData = userDoc.data()
+
+        await updateDoc(doc(db, 'users', userRef), {
+          ...userData,
+          list: remainingItems,
+        })
+      } catch (error) {
+        toast({
+          status: 'error',
+          description: 'Failed to update list in database',
+        })
+        console.log(error)
+      }
+
+      // Trigger refresh.
+      await initialisePage()
+      setLoading(false) // initialisePage() should do this, but this is thorough.
+    }
+
+    submitListUpdates()
+  }
+
   if (loading) {
     return <Spinner />
   }
@@ -339,7 +413,13 @@ const List = () => {
         />
       </Modal>
 
-      <Button colorScheme='blue' my='2rem' mx='3rem' height='100px'>
+      <Button
+        colorScheme='blue'
+        my='2rem'
+        mx='3rem'
+        height='100px'
+        onClick={handleUpdateList}
+      >
         Update List
       </Button>
     </Box>
