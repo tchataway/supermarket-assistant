@@ -1,5 +1,11 @@
 import { Box, Button } from '@chakra-ui/react'
-import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+} from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
 
 const SignIn = () => {
@@ -10,7 +16,7 @@ const SignIn = () => {
 
   const handleClick = async () => {
     try {
-      await signInWithPopup(auth, provider)
+      await signInWithRedirect(auth, provider)
       navigate('/')
     } catch (error) {
       console.log('Unable to sign in')
@@ -29,6 +35,13 @@ const SignIn = () => {
   return (
     <Box mx='auto' maxWidth={'300px'}>
       <Box mt='4rem'>{`Currently signed in as ${user.displayName}`}</Box>
+      <Button
+        onClick={() => {
+          signOut()
+        }}
+      >
+        Sign Out
+      </Button>
     </Box>
   )
 }
