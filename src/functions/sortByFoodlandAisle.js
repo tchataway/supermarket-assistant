@@ -1,13 +1,27 @@
+import sortByAisle from './sortByAisle'
+
 const sortByFoodlandAisle = (product, otherProduct) => {
-  if (!product.aisles.foodland) {
-    return 1
+  let aisle = product.aisles.foodland
+  let otherAisle = otherProduct.aisles.foodland
+
+  if (typeof aisle === 'undefined' && typeof otherAisle === 'undefined') {
+    // If neither product has an aisle, sort by
+    // product name instead.
+    if (product.name < otherProduct.name) {
+      return -1
+    }
+
+    if (product.name > otherProduct.name) {
+      return 1
+    }
+
+    // Names are the same, which should never happen,
+    // because product names are supposed to be
+    // unique.
+    return 0
   }
 
-  if (!otherProduct.aisles.foodland) {
-    return -1
-  }
-
-  return product.aisles.foodland - otherProduct.aisles.foodland
+  return sortByAisle(aisle, otherAisle)
 }
 
 export default sortByFoodlandAisle
