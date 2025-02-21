@@ -29,11 +29,15 @@ const Progress = ({ maxCount, remaining, onChange }) => {
   return (
     <CircularProgress value={progress} onClick={handleClick} color='green'>
       {remaining > 0 ? (
-        <CircularProgressLabel fontSize='lg' fontWeight='semibold'>
+        <CircularProgressLabel
+          fontSize='lg'
+          fontWeight='semibold'
+          userSelect='none'
+        >
           {remaining}
         </CircularProgressLabel>
       ) : (
-        <CircularProgressLabel>
+        <CircularProgressLabel userSelect='none'>
           <CheckIcon boxSize={6} color='green' />
         </CircularProgressLabel>
       )}
