@@ -73,7 +73,7 @@ const Request = ({
         remaining={remaining}
         onChange={handleProgressChange}
       />
-      <Box width='100%' justifyContent='start'>
+      <Box width='100%' justifyContent='start' userSelect={'none'}>
         {name}
       </Box>
       <Box
