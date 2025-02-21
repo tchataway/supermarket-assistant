@@ -73,7 +73,7 @@ const Request = ({
         remaining={remaining}
         onChange={handleProgressChange}
       />
-      <Box width='100%' justifyContent='start' userSelect={'none'}>
+      <Box width='100%' justifyContent='start' userSelect='none'>
         {name}
       </Box>
       <Box
@@ -81,6 +81,7 @@ const Request = ({
         fontSize={'lg'}
         width='50px'
         textAlign='center'
+        userSelect='none'
       >
         {loading ? (
           <Spinner />
