@@ -24,9 +24,7 @@ const NewRequest = ({ onSubmit, autocompleteOptions, validate }) => {
     option.toLowerCase().includes(itemName.toLowerCase())
   )
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-
+  const processItem = (itemName) => {
     if (itemName === '') {
       // Don't add items with empty names.
       return
@@ -42,6 +40,11 @@ const NewRequest = ({ onSubmit, autocompleteOptions, validate }) => {
     setAmount(1)
     setItemName('')
     setShowSuggestions(false)
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    processItem(itemName)
   }
 
   return (
@@ -88,9 +91,8 @@ const NewRequest = ({ onSubmit, autocompleteOptions, validate }) => {
                     <li
                       key={index}
                       onClick={() => {
-                        setItemName(item)
-                        itemNameInputRef.current.focus()
                         setShowSuggestions(false)
+                        processItem(item)
                       }}
                     >
                       {item}
