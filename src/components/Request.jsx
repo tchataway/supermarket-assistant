@@ -22,6 +22,10 @@ const Request = ({
   }
 
   useEffect(() => {
+    if (aisleDataFetched) {
+      return
+    }
+
     // Attempt to get aisle data from DB.
     const populateAislesData = async () => {
       const requestWithAislesData = {

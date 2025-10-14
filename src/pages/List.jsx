@@ -89,6 +89,7 @@ const List = () => {
             name: product.name,
             aisles: product.aisles,
             remaining: amount,
+            aisleDataFetched: true,
           }
         })
       )
