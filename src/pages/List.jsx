@@ -9,6 +9,7 @@ import {
   query,
   updateDoc,
   where,
+  writeBatch,
 } from 'firebase/firestore'
 import {
   Box,
@@ -270,6 +271,8 @@ const List = () => {
       setLoading(true)
 
       try {
+        const batch = writeBatch(db)
+
         await Promise.all(
           list.map(async (listItem) => {
             // Update product data in DB.
@@ -282,7 +285,7 @@ const List = () => {
 
             if (!existingProduct.empty) {
               // Update existing document.
-              await updateDoc(doc(db, 'products', existingProduct.docs[0].id), {
+              batch.update(doc(db, 'products', existingProduct.docs[0].id), {
                 ...existingProduct.docs[0].data(),
                 aisles: listItem.aisles,
               })
@@ -309,6 +312,8 @@ const List = () => {
             }
           })
         )
+
+        await batch.commit()
 
         // Update user list.
         const userRef = auth.currentUser.uid
