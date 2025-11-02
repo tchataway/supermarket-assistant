@@ -31,6 +31,10 @@ import sortByFoodlandAisle from '../functions/sortByFoodlandAisle'
 import sortByWoolworthsAisle from '../functions/sortByWoolworthsAisle'
 import NewRequest from '../components/NewRequest'
 import EditRequestModal from '../components/EditRequestModal'
+import {
+  booleanToDefaultSortDirectionSetting,
+  defaultSortDirectionSettingIsDescending,
+} from '../functions/utilities'
 
 const List = () => {
   const [user, setUser] = useState(null)
@@ -39,7 +43,11 @@ const List = () => {
   const [list, setList] = useState([])
   const [sortedList, setSortedList] = useState([])
   const [loading, setLoading] = useState(false)
-  const [sortDescending, setSortDescending] = useState(true)
+  const [sortDescending, setSortDescending] = useState(
+    defaultSortDirectionSettingIsDescending(
+      localStorage.getItem('SHOPPER.default_sort_direction')
+    )
+  )
   const [autocompleteOptions, setAutocompleteOptions] = useState([])
 
   // Edit Request Modal:
@@ -170,7 +178,12 @@ const List = () => {
   }
 
   const handleSortClick = () => {
-    setSortDescending((prevState) => !prevState)
+    const newSortDescending = !sortDescending
+    localStorage.setItem(
+      'SHOPPER.default_sort_direction',
+      booleanToDefaultSortDirectionSetting(newSortDescending)
+    )
+    setSortDescending(newSortDescending)
   }
 
   const validateNewRequest = (newRequest) => {
