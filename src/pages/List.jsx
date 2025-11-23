@@ -59,7 +59,7 @@ const List = () => {
   const auth = getAuth()
   const authUser = auth.currentUser
 
-  // Retrieve user from DB.
+  // Retrieve user from DB and load their shopping list.
   const getUser = async () => {
     if (!authUser) {
       // We should have redirected to the sign in page, but
@@ -78,12 +78,19 @@ const List = () => {
         return
       }
 
-      const userData = snapshot.data()
+      let userData = snapshot.data()
 
       if (!userData.approved) {
         console.log('User found but not approved yet.')
         setLoading(false)
         return
+      }
+
+      // Check for shared list.
+      if (userData.sharedListUser) {
+        // Load other user data instead.
+        const newSnapshot = await getDoc(doc(db, 'users', userData.sharedListUser))
+        userData = newSnapshot.data()
       }
 
       // Hydrate product data for each request.
