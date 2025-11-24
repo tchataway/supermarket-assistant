@@ -336,10 +336,18 @@ const List = () => {
         await batch.commit()
 
         // Update user list.
-        const userRef = auth.currentUser.uid
+        let userRef = auth.currentUser.uid
         const userDocRef = doc(db, 'users', userRef)
         const userDoc = await getDoc(userDocRef)
-        const userData = userDoc.data()
+        let userData = userDoc.data()
+
+        // Check for shared list.
+        if (userData.sharedListUser) {
+          // Load other user data instead.
+          userRef = userData.sharedListUser
+          const newSnapshot = await getDoc(doc(db, 'users', userData.sharedListUser))
+          userData = newSnapshot.data()
+        }
 
         await updateDoc(doc(db, 'users', userRef), {
           ...userData,
