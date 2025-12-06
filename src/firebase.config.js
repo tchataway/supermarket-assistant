@@ -1,5 +1,13 @@
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
+import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
+} from 'firebase/app-check'
+
+if (process.env.NODE_ENV === 'development') {
+  window.FIREBASE_APPCHECK_DEBUG_TOKEN = true
+}
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -14,3 +22,10 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 export const db = getFirestore(app)
+
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaEnterpriseProvider(
+    '6LcWIyMsAAAAANWXrlcfHa_NNEAuMXiJDgyg2uYO'
+  ),
+  isScopeLimited: false,
+})
