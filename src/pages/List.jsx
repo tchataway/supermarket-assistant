@@ -89,7 +89,9 @@ const List = () => {
       // Check for shared list.
       if (userData.sharedListUser) {
         // Load other user data instead.
-        const newSnapshot = await getDoc(doc(db, 'users', userData.sharedListUser))
+        const newSnapshot = await getDoc(
+          doc(db, 'users', userData.sharedListUser)
+        )
         userData = newSnapshot.data()
       }
 
@@ -345,7 +347,9 @@ const List = () => {
         if (userData.sharedListUser) {
           // Load other user data instead.
           userRef = userData.sharedListUser
-          const newSnapshot = await getDoc(doc(db, 'users', userData.sharedListUser))
+          const newSnapshot = await getDoc(
+            doc(db, 'users', userData.sharedListUser)
+          )
           userData = newSnapshot.data()
         }
 
