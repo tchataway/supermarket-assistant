@@ -9,7 +9,6 @@ if (process.env.NODE_ENV === 'development') {
   window.FIREBASE_APPCHECK_DEBUG_TOKEN = true
 }
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: 'AIzaSyB_Qi7s27KgmKn4RuzlCk-e57yocqzIN4E',
   authDomain: 'supermarket-assistant.firebaseapp.com',
@@ -19,7 +18,6 @@ const firebaseConfig = {
   appId: '1:559564714377:web:a741e929d6106da3a63158',
 }
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig)
 export const db = getFirestore(app)
 
